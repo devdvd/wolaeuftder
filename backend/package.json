@@ -1,0 +1,21 @@
+
+{
+  "name": "wolaeuftder-scraper",
+  "version": "1.0.0",
+  "description": "Scraper für Bundesliga TV-Termine",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "scrape": "node server.js",
+    "scrape-cheerio": "node server.js --cheerio",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0",
+    "axios": "^1.5.0",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "keywords": ["bundesliga", "scraping", "tv", "termine"],
+  "author": "kirschmann.dev",
+  "license": "MIT"
+}

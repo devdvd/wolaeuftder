@@ -1,0 +1,14 @@
+{
+  "name": "wolaeuftder",
+  "version": "1.0.0",
+  "description": "TV-Termine für deinen Lieblingsverein",
+  "main": "index.html",
+  "scripts": {
+    "android": "npx cap run android",
+    "ios": "npx cap run ios",
+    "sync": "npx cap sync"
+  },
+  "keywords": ["bundesliga", "tv", "app"],
+  "author": "kirschmann.dev",
+  "license": "MIT"
+}
