@@ -1,21 +1,27 @@
-
 {
-  "name": "wolaeuftder-scraper",
+  "name": "bundesliga-scraper",
   "version": "1.0.0",
   "description": "Scraper für Bundesliga TV-Termine",
-  "main": "server.js",
+  "main": "bundesliga-scraper.js",
   "scripts": {
-    "start": "node server.js",
-    "scrape": "node server.js",
-    "scrape-cheerio": "node server.js --cheerio",
+    "start": "node bundesliga-scraper.js",
+    "scrape": "node bundesliga-scraper.js",
+    "scrape-cheerio": "node bundesliga-scraper.js --cheerio",
+    "debug": "node bundesliga-scraper.js --debug",
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
-    "puppeteer": "^21.0.0",
-    "axios": "^1.5.0",
-    "cheerio": "^1.0.0-rc.12"
+    "axios": "^1.11.0",
+    "cheerio": "^1.1.2",
+    "puppeteer": "^24.19.0"
   },
-  "keywords": ["bundesliga", "scraping", "tv", "termine"],
+  "keywords": [
+    "bundesliga",
+    "scraping",
+    "tv",
+    "termine"
+  ],
   "author": "kirschmann.dev",
-  "license": "MIT"
+  "license": "MIT",
+  "type": "commonjs"
 }

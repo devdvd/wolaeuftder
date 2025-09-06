@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bundesliga TV-Termine Server</title>
+    <title>woläuftder... Server</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -99,7 +99,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>⚽ Bundesliga TV-Termine Server</h1>
+        <h1>⚽ woläuftder... Server</h1>
         <p>Sammelt alle TV-Termine der aktuellen Bundesliga-Saison</p>
     </div>
 
@@ -140,45 +140,43 @@
             scrapeBtn.disabled = true;
             statusDiv.style.display = 'block';
             statusDiv.className = 'status loading';
-            statusDiv.textContent = 'Sammle TV-Termine...';
+            statusDiv.textContent = 'Lade TV-Termine...';
             matchesDiv.innerHTML = '';
             allMatches = [];
             teams.clear();
 
             try {
-                // Starte mit Spieltag 1 und gehe durch bis keine Termine mehr vorhanden sind
-                let spieltag = 1;
-                let hasMatches = true;
-
-                while (hasMatches && spieltag <= 40) { // Sicherheitsgrenze bei 40 Spieltagen
-                    statusDiv.textContent = `Sammle Spieltag ${spieltag}...`;
+                // Versuche echte Daten zu laden
+                statusDiv.textContent = 'Lade echte Bundesliga-Daten...';
+                const dataResult = await loadDataFromJSON();
+                
+                if (dataResult.success) {
+                    // Echte Daten erfolgreich geladen
+                    allMatches = dataResult.matches;
                     
-                    const matches = await scrapeSpieltagWithCORS(spieltag);
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `✅ Erfolgreich! ${dataResult.totalMatches} Spiele geladen (Spieltag ${dataResult.currentSpieltag})`;
                     
-                    if (matches.length === 0) {
-                        hasMatches = false;
-                        break;
-                    }
-
-                    allMatches.push(...matches);
-                    
-                    // Sammle alle Teams für den Filter
-                    matches.forEach(match => {
-                        teams.add(match.homeTeam);
-                        teams.add(match.awayTeam);
-                    });
-
                     // Zeige die Spiele an
-                    displayMatches(matches);
+                    allMatches.forEach(match => {
+                        displayMatches([match]);
+                    });
                     
-                    spieltag++;
+                } else {
+                    // Fallback: Generiere Demo-Daten
+                    statusDiv.textContent = 'Generiere Fallback-Daten...';
                     
-                    // Kurze Pause zwischen Requests
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const fallbackMatches = await generateFallbackData();
+                    allMatches = fallbackMatches;
+                    
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `⚠️ Fallback-Daten: ${allMatches.length} Demo-Spiele generiert`;
+                    
+                    // Zeige die Spiele an
+                    allMatches.forEach(match => {
+                        displayMatches([match]);
+                    });
                 }
-
-                statusDiv.className = 'status success';
-                statusDiv.textContent = `✅ Erfolgreich! ${allMatches.length} Spiele von ${spieltag - 1} Spieltagen gesammelt.`;
                 
                 // Aktiviere Download-Buttons
                 document.getElementById('downloadBtn').disabled = false;
@@ -193,20 +191,47 @@
             } catch (error) {
                 statusDiv.className = 'status error';
                 statusDiv.textContent = `❌ Fehler: ${error.message}`;
-                console.error('Scraping error:', error);
+                console.error('Loading error:', error);
             } finally {
                 scrapeBtn.disabled = false;
             }
         }
 
-        async function scrapeSpieltagWithCORS(spieltag) {
-            // Da wir CORS-Probleme haben werden, simulieren wir erstmal die Datenstruktur
-            // In der echten Implementierung würde hier ein Backend-Service die Daten sammeln
+        async function loadDataFromJSON() {
+            // Versuche echte Daten aus der JSON-Datei zu laden
+            try {
+                const response = await fetch('./backend/bundesliga-tv-termine.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Echte Daten geladen:', data.totalMatches, 'Spiele');
+                    
+                    // Konvertiere zu dem erwarteten Format
+                    allMatches = data.matches || [];
+                    
+                    // Sammle Teams
+                    teams.clear();
+                    data.teams?.forEach(team => teams.add(team));
+                    
+                    return {
+                        success: true,
+                        matches: allMatches,
+                        totalMatches: data.totalMatches,
+                        currentSpieltag: data.currentSpieltag
+                    };
+                } else {
+                    throw new Error('JSON-Datei nicht gefunden');
+                }
+            } catch (error) {
+                console.log('⚠️ Fehler beim Laden der echten Daten:', error.message);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function generateFallbackData() {
+            // Fallback: Generiere Demo-Daten wenn keine echten Daten verfügbar
+            console.log('📝 Generiere Fallback-Daten...');
             
-            // Für Demo-Zwecke erstellen wir Beispieldaten
-            if (spieltag > 5) return []; // Simuliere, dass nur 5 Spieltage verfügbar sind
-            
-            const teams = [
+            const teamsList = [
                 'FC Bayern München', 'Borussia Dortmund', 'RB Leipzig', 'Bayer 04 Leverkusen',
                 'Borussia Mönchengladbach', 'VfL Wolfsburg', 'Eintracht Frankfurt', 'TSG Hoffenheim',
                 'Sport-Club Freiburg', '1. FC Union Berlin', 'VfB Stuttgart', 'SV Werder Bremen',
@@ -221,42 +246,50 @@
             ];
 
             const matches = [];
-            const baseDate = new Date('2025-09-06');
-            baseDate.setDate(baseDate.getDate() + (spieltag - 1) * 7);
+            const today = new Date();
+            
+            // Generiere 5 Spieltage mit je 9 Spielen
+            for (let spieltag = 3; spieltag <= 7; spieltag++) {
+                const baseDate = new Date(today);
+                baseDate.setDate(today.getDate() + (spieltag - 3) * 7);
 
-            // Generiere 9 Spiele pro Spieltag (18 Teams)
-            for (let i = 0; i < 9; i++) {
-                const homeTeam = teams[i * 2];
-                const awayTeam = teams[i * 2 + 1];
-                const matchDate = new Date(baseDate);
-                
-                // Verschiedene Kickoff-Zeiten
-                if (i === 0) {
-                    matchDate.setDate(matchDate.getDate() + 5); // Freitag
-                    matchDate.setHours(20, 30, 0, 0);
-                } else if (i < 6) {
-                    matchDate.setDate(matchDate.getDate() + 6); // Samstag
-                    matchDate.setHours(i === 5 ? 18 : 15, 30, 0, 0);
-                } else {
-                    matchDate.setDate(matchDate.getDate() + 7); // Sonntag
-                    matchDate.setHours(i === 7 ? 15 : 17, 30, 0, 0);
+                for (let i = 0; i < 9; i++) {
+                    const homeTeam = teamsList[i * 2];
+                    const awayTeam = teamsList[i * 2 + 1];
+                    const matchDate = new Date(baseDate);
+                    
+                    // Verschiedene Kickoff-Zeiten
+                    if (i === 0) {
+                        matchDate.setDate(matchDate.getDate() + 5); // Freitag
+                        matchDate.setHours(20, 30, 0, 0);
+                    } else if (i < 6) {
+                        matchDate.setDate(matchDate.getDate() + 6); // Samstag
+                        matchDate.setHours(i === 5 ? 18 : 15, 30, 0, 0);
+                    } else {
+                        matchDate.setDate(matchDate.getDate() + 7); // Sonntag
+                        matchDate.setHours(i === 7 ? 15 : 17, 30, 0, 0);
+                    }
+
+                    const broadcaster = broadcasters[i % broadcasters.length];
+
+                    matches.push({
+                        spieltag: spieltag,
+                        homeTeam: homeTeam,
+                        awayTeam: awayTeam,
+                        date: matchDate.toISOString(),
+                        dateFormatted: formatDateTime(matchDate),
+                        kickoff: matchDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+                        broadcaster: broadcaster.name,
+                        broadcasterLogo: broadcaster.logo,
+                        season: currentSeason
+                    });
                 }
-
-                const broadcaster = broadcasters[i % broadcasters.length];
-
-                matches.push({
-                    spieltag: spieltag,
-                    homeTeam: homeTeam,
-                    awayTeam: awayTeam,
-                    date: matchDate.toISOString(),
-                    dateFormatted: formatDateTime(matchDate),
-                    kickoff: matchDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
-                    broadcaster: broadcaster.name,
-                    broadcasterLogo: broadcaster.logo,
-                    season: currentSeason
-                });
             }
 
+            // Sammle Teams
+            teams.clear();
+            teamsList.forEach(team => teams.add(team));
+            
             return matches;
         }
 
@@ -346,7 +379,7 @@
             
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
-            link.download = `bundesliga-tv-termine-${currentSeason}.json`;
+            link.download = `bundesliga-tv-termine.json`;
             link.click();
         }
 
