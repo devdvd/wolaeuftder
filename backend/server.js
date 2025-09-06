@@ -270,27 +270,3 @@ if (require.main === module) {
 }
 
 module.exports = { BundesligaScraper, runForGitHubActions };
-
-// Package.json für Backend
-/*
-{
-  "name": "bundesliga-scraper",
-  "version": "1.0.0",
-  "description": "Scraper für Bundesliga TV-Termine",
-  "main": "bundesliga-scraper.js",
-  "scripts": {
-    "start": "node bundesliga-scraper.js",
-    "scrape": "node bundesliga-scraper.js",
-    "scrape-cheerio": "node bundesliga-scraper.js --cheerio",
-    "test": "echo \"No tests yet\""
-  },
-  "dependencies": {
-    "puppeteer": "^21.0.0",
-    "axios": "^1.5.0",
-    "cheerio": "^1.0.0-rc.12"
-  },
-  "keywords": ["bundesliga", "scraping", "tv", "termine"],
-  "author": "Dein Name",
-  "license": "MIT"
-}
-*/
