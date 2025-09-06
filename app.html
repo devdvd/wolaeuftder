@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>woläuftder... TV-Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .setup-screen {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .app-screen {
+            display: none;
+        }
+
+        .team-selector {
+            margin: 30px 0;
+        }
+
+        .team-selector h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .team-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .team-card:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.2);
+        }
+
+        .team-card.selected {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+
+        .team-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .team-card .team-short {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .confirm-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .confirm-btn:hover {
+            background: #0056b3;
+        }
+
+        .confirm-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+
+        .match-date {
+            color: #007bff;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .match-teams {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .my-team {
+            color: #007bff;
+        }
+
+        .match-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .match-time {
+            background: #f8f9fa;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .broadcaster {
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .no-matches {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.1em;
+        }
+
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            margin: 20px auto;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .teams-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .match-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="settings-btn" onclick="showSetup()" style="display: none;">⚙️</button>
+        
+        <div class="header">
+            <h1>⚽ woläuftder... TV-Guide</h1>
+            <p class="subtitle">Alle TV-Termine deines Lieblingsvereins</p>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setupScreen" class="setup-screen">
+            <h2>Wähle deinen Lieblingsverein</h2>
+            <p>Du erhältst alle TV-Termine für die Spiele deines Teams</p>
+            
+            <div class="teams-grid" id="teamsGrid">
+                <!-- Teams werden hier dynamisch geladen -->
+            </div>
+            
+            <button id="confirmBtn" class="confirm-btn" onclick="confirmTeamSelection()" disabled>
+                Verein bestätigen
+            </button>
+        </div>
+
+        <!-- App Screen -->
+        <div id="appScreen" class="app-screen">
+            <div id="loadingDiv" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Lade TV-Termine...</p>
+            </div>
+            
+            <div id="matchesContainer">
+                <!-- Matches werden hier angezeigt -->
+            </div>
+            
+            <button class="refresh-btn" onclick="loadMatches()">🔄 Aktualisieren</button>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        let selectedTeam = null;
+        let allMatches = [];
+        let teamData = [];
+
+        // GitHub Pages URL für die JSON-Daten
+        const DATA_URL = 'https://devdvd.github.io/wolaeuftder/bundesliga-tv-termine.json';
+
+        // Teams mit Kurznamen
+        const TEAMS = [
+            { name: 'FC Bayern München', short: 'FCB' },
+            { name: 'Borussia Dortmund', short: 'BVB' },
+            { name: 'RB Leipzig', short: 'RBL' },
+            { name: 'Bayer 04 Leverkusen', short: 'B04' },
+            { name: 'Borussia Mönchengladbach', short: 'BMG' },
+            { name: 'VfL Wolfsburg', short: 'WOB' },
+            { name: 'Eintracht Frankfurt', short: 'SGE' },
+            { name: 'TSG Hoffenheim', short: 'TSG' },
+            { name: 'Sport-Club Freiburg', short: 'SCF' },
+            { name: '1. FC Union Berlin', short: 'FCU' },
+            { name: 'VfB Stuttgart', short: 'VFB' },
+            { name: 'SV Werder Bremen', short: 'SVW' },
+            { name: 'FC Augsburg', short: 'FCA' },
+            { name: '1. FSV Mainz 05', short: 'M05' },
+            { name: '1. FC Köln', short: 'KOE' },
+            { name: 'FC St. Pauli', short: 'STP' },
+            { name: 'Hamburger SV', short: 'HSV' },
+            { name: '1. FC Heidenheim 1846', short: 'FCH' }
+        ];
+
+        // App Initialisierung
+        window.addEventListener('load', () => {
+            initApp();
+        });
+
+        function initApp() {
+            // Prüfe ob schon ein Team gespeichert ist
+            selectedTeam = localStorage.getItem('selectedTeam');
+            
+            if (selectedTeam) {
+                showApp();
+                loadMatches();
+            } else {
+                showSetup();
+            }
+        }
+
+        function showSetup() {
+            document.getElementById('setupScreen').style.display = 'block';
+            document.getElementById('appScreen').style.display = 'none';
+            document.querySelector('.settings-btn').style.display = 'none';
+            renderTeamSelector();
+        }
+
+        function showApp() {
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'block';
+            document.querySelector('.settings-btn').style.display = 'block';
+        }
+
+        function renderTeamSelector() {
+            const teamsGrid = document.getElementById('teamsGrid');
+            teamsGrid.innerHTML = '';
+
+            TEAMS.forEach(team => {
+                const teamCard = document.createElement('div');
+                teamCard.className = 'team-card';
+                teamCard.onclick = () => selectTeam(team.name, teamCard);
+                
+                teamCard.innerHTML = `
+                    <h3>${team.name}</h3>
+                    <div class="team-short">${team.short}</div>
+                `;
+                
+                teamsGrid.appendChild(teamCard);
+            });
+        }
+
+        function selectTeam(teamName, cardElement) {
+            // Entferne Auswahl von allen Karten
+            document.querySelectorAll('.team-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Markiere gewählte Karte
+            cardElement.classList.add('selected');
+            selectedTeam = teamName;
+            
+            // Aktiviere Bestätigungs-Button
+            document.getElementById('confirmBtn').disabled = false;
+        }
+
+        function confirmTeamSelection() {
+            if (!selectedTeam) return;
+            
+            // Speichere Auswahl
+            localStorage.setItem('selectedTeam', selectedTeam);
+            
+            // Wechsle zur App
+            showApp();
+            loadMatches();
+        }
+
+        async function loadMatches() {
+            const loadingDiv = document.getElementById('loadingDiv');
+            const matchesContainer = document.getElementById('matchesContainer');
+            
+            loadingDiv.style.display = 'block';
+            matchesContainer.innerHTML = '';
+
+            try {
+                // Für Demo-Zwecke generieren wir lokale Daten
+                // In der echten App würdest du hier die JSON von GitHub Pages laden:
+                // const response = await fetch(DATA_URL);
+                // const data = await response.json();
+                
+                const data = await generateDemoData();
+                allMatches = data.matches;
+
+                // Filtere Spiele des ausgewählten Teams
+                const teamMatches = allMatches.filter(match => 
+                    match.homeTeam === selectedTeam || match.awayTeam === selectedTeam
+                );
+
+                // Sortiere nach Datum
+                teamMatches.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                // Filtere nur zukünftige Spiele
+                const now = new Date();
+                const upcomingMatches = teamMatches.filter(match => new Date(match.date) > now);
+
+                loadingDiv.style.display = 'none';
+
+                if (upcomingMatches.length === 0) {
+                    matchesContainer.innerHTML = `
+                        <div class="no-matches">
+                            <h3>Keine kommenden TV-Termine</h3>
+                            <p>Für ${selectedTeam} sind aktuell keine TV-Termine verfügbar.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Zeige Spiele an
+                upcomingMatches.forEach(match => {
+                    const matchElement = createMatchElement(match);
+                    matchesContainer.appendChild(matchElement);
+                });
+
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                matchesContainer.innerHTML = `
+                    <div class="no-matches">
+                        <h3>Fehler beim Laden</h3>
+                        <p>TV-Termine konnten nicht geladen werden.</p>
+                        <p style="font-size: 0.9em; opacity: 0.7;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function createMatchElement(match) {
+            const matchDiv = document.createElement('div');
+            matchDiv.className = 'match-card';
+            
+            const matchDate = new Date(match.date);
+            const isHomeTeam = match.homeTeam === selectedTeam;
+            
+            // Formatiere Datum
+            const dateOptions = {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const formattedDate = matchDate.toLocaleDateString('de-DE', dateOptions);
+            
+            // Erstelle Team-Anzeige mit Hervorhebung des eigenen Teams
+            const homeTeamClass = isHomeTeam ? 'my-team' : '';
+            const awayTeamClass = !isHomeTeam && match.awayTeam === selectedTeam ? 'my-team' : '';
+            
+            matchDiv.innerHTML = `
+                <div class="match-date">
+                    ${formattedDate} • Spieltag ${match.spieltag}
+                </div>
+                <div class="match-teams">
+                    <span class="${homeTeamClass}">${match.homeTeam}</span>
+                    vs
+                    <span class="${awayTeamClass}">${match.awayTeam}</span>
+                </div>
+                <div class="match-info">
+                    <div class="match-time">⏰ ${match.kickoff} Uhr</div>
+                    <div class="broadcaster">📺 ${match.broadcaster}</div>
+                </div>
+            `;
+            
+            return matchDiv;
+        }
+
+        async function generateDemoData() {
+            // Demo-Daten für die App (später durch GitHub Pages JSON ersetzt)
+            const matches = [];
+            const baseDate = new Date();
+            
+            // Generiere 10 kommende Spiele für verschiedene Teams
+            for (let i = 0; i < 10; i++) {
+                const matchDate = new Date(baseDate);
+                matchDate.setDate(matchDate.getDate() + (i * 7) + Math.floor(Math.random() * 7));
+                matchDate.setHours(15 + Math.floor(Math.random() * 5), Math.random() > 0.5 ? 30 : 0, 0, 0);
+                
+                const allTeams = TEAMS.map(t => t.name);
+                const homeTeam = allTeams[Math.floor(Math.random() * allTeams.length)];
+                let awayTeam = allTeams[Math.floor(Math.random() * allTeams.length)];
+                while (awayTeam === homeTeam) {
+                    awayTeam = allTeams[Math.floor(Math.random() * allTeams.length)];
+                }
+                
+                const broadcasters = ['Sky Deutschland', 'DAZN', 'WOW'];
+                const broadcaster = broadcasters[Math.floor(Math.random() * broadcasters.length)];
+                
+                matches.push({
+                    spieltag: Math.floor(i / 9) + 1,
+                    homeTeam: homeTeam,
+                    awayTeam: awayTeam,
+                    date: matchDate.toISOString(),
+                    kickoff: matchDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+                    broadcaster: broadcaster,
+                    season: '2025-2026'
+                });
+            }
+            
+            return {
+                lastUpdated: new Date().toISOString(),
+                season: '2025-2026',
+                totalMatches: matches.length,
+                teams: TEAMS.map(t => t.name),
+                matches: matches
+            };
+        }
+
+        // Service Worker für Offline-Funktionalität (optional)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
